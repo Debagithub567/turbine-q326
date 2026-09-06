@@ -4,8 +4,8 @@ use crate::VaultState;
 
 #[derive(Accounts)]
 pub struct Withdraw<'info>{
-    user: Signer<'info>,
-    vautl_state: Account<'info, VaultState>,
-    vault_asset: SystemAccount<'info>,
-    system_program: Program<'info , System>,
+    pub user: Signer<'info>,
+    pub vautl_state: Account<'info, VaultState>,
+    pub vault_asset: SystemAccount<'info>,
+    pub system_program: Program<'info , System>,
 }
