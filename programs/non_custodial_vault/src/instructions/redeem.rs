@@ -41,16 +41,20 @@ impl<'info> Redeem<'info> {
             NonCustodialVaultError::InsufficientShares
         );
 
-        let assets = shares
-            .checked_mul(self.vault_state.total_assets)
-            .ok_or(NonCustodialVaultError::ArithmeticOverflow)?
-            .checked_div(self.vault_state.total_shares)
+        // Pro-rata against the vault's ACTUAL current balance, not the
+        // total_assets ledger. Since shares <= total_shares is already
+        // enforced above, this can never exceed vault_position.amount —
+        // so redemption always succeeds and never blocks on liquidity.
+        // Worst case (vault fully drained), you get 0 back but still
+        // exit and burn your shares instead of being stuck forever.
+        let assets = (shares as u128)
+            .checked_mul(self.vault_position.amount as u128)
+            .and_then(|v| v.checked_div(self.vault_state.total_shares as u128))
             .ok_or(NonCustodialVaultError::ArithmeticOverflow)?;
 
-        require!(
-            assets <= self.vault_position.amount,
-            NonCustodialVaultError::InsufficientAssets
-        );
+        let assets: u64 = assets
+            .try_into()
+            .map_err(|_| NonCustodialVaultError::ArithmeticOverflow)?;
 
         let authority_key = self.vault_state.authority;
 
@@ -70,7 +74,7 @@ impl<'info> Redeem<'info> {
             assets,
         )?;
 
-        self.vault_state.total_assets -= assets;
+        self.vault_state.total_assets = self.vault_state.total_assets.saturating_sub(assets);
         self.vault_state.total_shares -= shares;
 
         Ok(())
