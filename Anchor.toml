@@ -6,6 +6,8 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
+escrow = "qWtAtEL4Xop24c1pqddXNNPwe1Q64vfTTHdexg37LZM"
+non_custodial_vault = "C7FsYTTXgD9GEDVK4GMw6v9TqSgw5AJGWSdiydzwxXDR"
 vault = "3NRNFiWAT7rroze7b78sP9yQEdx1S34Q1tZqzewTfHja"
 
 [registry]

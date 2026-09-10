@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{VaultError, VaultState};
 
 #[derive(Accounts)]
-pub struct Withdraw<'info> {
+pub struct Deposit<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
@@ -15,7 +15,7 @@ pub struct Withdraw<'info> {
     pub vault_state: Account<'info, VaultState>,
 
     /// CHECK:
-    /// Validated by PDA seeds and stored address.
+    /// Validated by PDA seeds and the stored vault_asset address.
     #[account(
         mut,
         address = vault_state.vault_asset,
@@ -27,30 +27,17 @@ pub struct Withdraw<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> Withdraw<'info> {
-    pub fn withdraw(&self, amount: u64, bump: u8) -> Result<()> {
+impl<'info> Deposit<'info> {
+    pub fn deposit(&self, amount: u64) -> Result<()> {
         require!(amount > 0, VaultError::InvalidAmount);
 
-        require!(
-            self.vault_asset.lamports() >= amount,
-            VaultError::InsufficientFunds
-        );
-
-        let user_key = self.user.key();
-
-        let signer_seeds: &[&[&[u8]]] = &[&[b"vault_asset", user_key.as_ref(), &[bump]]];
-
         let accounts = anchor_lang::system_program::Transfer {
-            from: self.vault_asset.to_account_info(),
-            to: self.user.to_account_info(),
+            from: self.user.to_account_info(),
+            to: self.vault_asset.to_account_info(),
         };
 
         anchor_lang::system_program::transfer(
-            CpiContext::new_with_signer(
-                self.system_program.to_account_info(),
-                accounts,
-                signer_seeds,
-            ),
+            CpiContext::new(self.system_program.to_account_info(), accounts),
             amount,
         )
     }

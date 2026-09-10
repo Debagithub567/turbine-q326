@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 
-
 #[account]
-
+#[derive(InitSpace)]
 pub struct VaultState {
-    owner: Pubkey,
-    vault_asset: Pubkey,
+    pub owner: Pubkey,
+    pub vault_asset: Pubkey,
 }
